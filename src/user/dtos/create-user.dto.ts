@@ -1,10 +1,12 @@
-import { IsEmail, IsString, MinLength, minLength } from "class-validator";
+import { IsDefined, IsEmail, IsString, MinLength, minLength } from "class-validator";
 
 export class CreateUser {
+    @IsDefined()
     @IsString()
     @MinLength(2)    
     name: string;
     
+    @IsDefined()
     @IsEmail()
     email: string;
     

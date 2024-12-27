@@ -5,15 +5,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUser, UpdateUser } from './dtos/create-user.dto';
-
-import * as bcrypt from 'bcrypt';
+import * as argon2 from 'argon2';
 
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async findOneById(id: string) {
-    const findUser = await this.prisma.user.findUnique({ where: { id: id } });
+    const findUser = await this.prisma.user.findUnique({ where: { id } });
 
     if (!findUser) {
       throw new NotFoundException(`User with ID '${id}' not found.`);
@@ -22,12 +21,26 @@ export class UserService {
     return findUser;
   }
 
+  async findOneByEmailWithThrow(email: string) {
+    const findUser = this.findOneByEmail(email);
+    
+    if (!findUser) {
+      throw new NotFoundException(`User with Email '${email}' not found.`);
+    }
+
+    return findUser;
+  }
+
   async findOneByEmail(email: string) {
-    return await this.prisma.user.findUnique({ where: { email: email } });
+    const findUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    return findUser;
   }
 
   async createOne(dto: CreateUser) {
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const hashedPassword = await argon2.hash(dto.password);
 
     return await this.prisma.user.create({
       data: {
@@ -52,10 +65,11 @@ export class UserService {
       }
     }
 
+    // TODO: Переделать логику и добвить кейс для смены парроля
     const data = {
       ...dto,
       hashedPassword: dto.password
-        ? await bcrypt.hash(dto.password, 10)
+        ? await argon2.hash(dto.password)
         : undefined,
     };
 
@@ -69,13 +83,11 @@ export class UserService {
     });
   }
 
-  async deleteOne(id:string) {
+  async deleteOne(id: string) {
     await this.findOneById(id);
-    
     return this.prisma.user.delete({ where: { id } });
   }
-  
-  
+
   async getAll() {
     return await this.prisma.user.findMany();
   }

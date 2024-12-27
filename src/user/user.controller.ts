@@ -11,9 +11,9 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUser, UpdateUser } from './dtos/create-user.dto';
-import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { AccessGuard } from 'src/auth/guards/tokens.guard';
 
-@UseGuards(AuthGuard)
+@UseGuards(AccessGuard)
 @Controller('api/user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
